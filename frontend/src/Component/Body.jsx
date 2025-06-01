@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import { useContext } from 'react';
 import { AppContext } from '../appContext';
 import robotImg from '../assets/robot.png'
+import axios from 'axios'
 const Body = () => {
     const { setStarted,setPersona} = useContext(AppContext);
     const [name,setName] = useState("")
@@ -14,7 +15,7 @@ const Body = () => {
             name,
             about:description
       });
-
+         console.log(res)
          } catch (error) {
             console.error(error)
          }

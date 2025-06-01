@@ -3,13 +3,13 @@ const cors = require("cors");
 const axios = require("axios");
 const OpenAI= require("openai");
 const {config} = require("dotenv");
-
+config();
 const openai = new OpenAI({
-  apiKey: OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY
 });
 const app = express();
 const PORT = process.env.PORT || 3000;
-config();
+
 app.use(cors());
 app.use(express.json());
 
