@@ -8,19 +8,39 @@ const Body = () => {
     const { setStarted,setPersona} = useContext(AppContext);
     const [name,setName] = useState("")
     const [description,setDescription] = useState('')
+
+    function toTitleCase(str) {
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
     const handleStart = async()=>{
          if (!name.trim()) return alert("Please enter a name.");
+         const personName = toTitleCase(name)
+         if (!name.trim()) return alert("Please tell something in about");
+         
          try {
-            const res = await axios.get("http://localhost:3000/persona", {
-            name,
+            const res = await axios.post("http://localhost:3000/persona", {
+            name:personName,
             about:description
       });
-         console.log(res)
+          const personaName = res.data.name
+          
+          
+          const about = res.data.about
+          
+          const image = res.data.image;
+          setName(personaName)
+           setPersona({ name: personaName, about, image }); // Store persona globally
+           setStarted(true);                  // Signal app to go to ChatUI
+
          } catch (error) {
             console.error(error)
          }
-        setPersona({ name, description }); // Store persona globally
-        setStarted(true);                  // Signal app to go to ChatUI
+       
     }
     
     return (

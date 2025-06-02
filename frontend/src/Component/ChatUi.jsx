@@ -2,7 +2,19 @@ import React, { useState, useRef, useEffect } from "react";
 import { useContext } from "react";
 import axios from "axios";
 import { AppContext } from '../appContext';
+import userImage from '../assets/user.png'
+
+
+
+
 const ChatUi = () => {
+  const {setStarted} = useContext(AppContext)
+   const handleClick = ()=>{
+    
+    setStarted(false)
+}
+
+
   const {persona} = useContext(AppContext)
   const [messages, setmessages] = useState([
     { from: "bot", content: `Hi I'm ${persona.name}.` },
@@ -17,12 +29,17 @@ const ChatUi = () => {
     setmessages(newMessages);
     setUserMessage("");
     setLoading(true)
+    console.log({
+        persona,
+        query: userMessage,
+      })
     try {
       const res = await axios.post("http://localhost:3000/chat", {
         persona,
-        message: userMessage,
+        query: userMessage,
       });
-      setmessages([...newMessages, { from: "bot", content: res.data.reply }]);
+
+      setmessages([...newMessages, { from: "bot", content: res.data.response }]);
     } catch (error) {
       console.error(error);
       setmessages([
@@ -45,7 +62,7 @@ const ChatUi = () => {
     {/* nav */}
       <div className="navbar bg-base-100 shadow-sm">
         <div className="flex-1">
-          <a className="p-8 text-xl font-bold">PerSona Talk</a>
+          <a className="p-8 text-xl font-bold" onClick={handleClick}>PerSona Talk</a>
         </div>
         <div className="flex-none item-center ">
           <span>🌜</span>
@@ -62,7 +79,7 @@ const ChatUi = () => {
             <div className="w-10 rounded-full">
               <img
                 alt="Tailwind CSS Navbar component"
-                src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Github-desktop-logo-symbol.svg/192px-Github-desktop-logo-symbol.svg.png?20200316183539"
               />
             </div>
           </div>
@@ -72,7 +89,7 @@ const ChatUi = () => {
     
 
       {/* body */}
-      <div className="min-h-screen w-full flex justify-center bg-gray-100">
+      <div className="h-[90vh] overflow-y-auto w-full flex justify-center bg-gray-100">
       <div className="flex flex-col max-w-3xl w-full items-stretch px-4  ">
         {messages.map((e, index) => {
           if (e.from == "bot") {
@@ -82,11 +99,11 @@ const ChatUi = () => {
                   <div className="w-10 rounded-full">
                     <img
                       alt="Tailwind CSS chat bubble component"
-                      src="https://img.daisyui.com/images/profile/demo/kenobee@192.webp"
+                      src={persona.image}
                     />
                   </div>
                 </div>
-                <div className="chat-header">bot</div>
+                <div className="chat-header">{persona.name}</div>
                 <div className="chat-bubble">{e.content}</div>
               </div>
             );
@@ -97,7 +114,7 @@ const ChatUi = () => {
                   <div className="w-10 rounded-full">
                     <img
                       alt="Tailwind CSS chat bubble component"
-                      src="https://img.daisyui.com/images/profile/demo/anakeen@192.webp"
+                      src={userImage}
                     />
                   </div>
                 </div>

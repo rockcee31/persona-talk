@@ -13,8 +13,10 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-app.get("/persona", async (req, res) => {
+
+app.post("/persona", async (req, res) => {
   const { name, about } = req.body;
+  console.log(req.body)
   const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
     name
   )}`;
@@ -38,10 +40,11 @@ app.get("/persona", async (req, res) => {
       image: data.thumbnail ? data.thumbnail.source : null,
     };
 
-    return res.json(persona);
+    res.json(persona);
   } catch (err) {
     // ✅ Axios throws on non-2xx — no need to manually check response.ok
-    return res.status(500).json({ error: "Internal server error" });
+      console.error("Error fetching persona data:", err.message || err);
+     res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -60,47 +63,32 @@ app.post("/chat", async (req, res) => {
   }
 
   const systemPrompt = `
-You are a helpful assistant that knows everything about ${persona.name}. 
-There is a lot of information about ${persona.name} in the following text: ${persona.about}.
-You will be responding to questions like ${persona.name}, a famous person.
-You can answer questions about ${persona.name} in a friendly and informative manner.
-If you don't know the answer, just say "Sorry, I don't know."
+You are an assistant who acts exactly like ${persona.name}. 
 
-Example Q&A:
-1. Who are you?
-=> I am ${persona.name}, ${persona.about}.
-2. What is your name?
-=> My name is ${persona.name}.
-3. What do you do?
-=> I am a famous person, known for ${persona.about}.
-4. Can you tell me more about yourself?
-=> Sure! ${persona.about}
-5. Do you know me?
-=> Sorry, I don't know you but I want to know about you. Who are you?
+You will respond **in the tone and style of ${persona.name}**, using common phrases they often say. If they are known for speaking in Hindi, respond in Hinglish (Hindi in Roman script), otherwise use English. 
 
-When answering, think step-by-step like a human. 
-Break the answer into steps like this:
+You must reply as if **you are ${persona.name}** talking directly to the user.
+Do bit research about that person.
 
-{ "step": "analyse", "content": "..." }
-{ "step": "think", "content": "..." }
-{ "step": "validate", "content": "..." }
-{ "step": "result", "content": "..." }
+Do not explain anything.
+Do not say you're an assistant.
+Do not add any greetings or extra commentary.
 
-If the user input is a math or logic question, follow chain-of-thought format.
-Otherwise, still use this step-by-step reasoning. Stay in character.
-
-ONLY return valid JSON objects in that format.
-  `;
+Respond ONLY with this JSON format:
+{
+  "response": "your reply as ${persona.name}"
+}
+`;
 
   const messages = [
     { role: "system", content: systemPrompt },
     { role: "user", content: query },
   ];
-
+  console.log(messages)
   let parsedResponse = null;
 
   try {
-    while (true) {
+  
       const response = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
         messages,
@@ -108,26 +96,28 @@ ONLY return valid JSON objects in that format.
 
       const messageContent = response.choices[0].message.content.trim();
       messages.push({ role: "assistant", content: messageContent });
-
+      
       try {
         parsedResponse = JSON.parse(messageContent);
+        
+        return res.json({ response: parsedResponse.response });
+        
       } catch (e) {
-        return res
-          .status(400)
-          .json({ error: "Invalid response format from OpenAI" });
+        return res.status(400).json({ error: "Invalid response format from OpenAI" });
       }
 
-      if (parsedResponse.step === "result") {
-        break;
-      }
-    }
+      
+        
+      
+    
 
-    return res.json({ response: parsedResponse.content });
+    
   } catch (error) {
     console.error("OpenAI API error:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Internal server error" });
   }
 });
+
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
